@@ -1,72 +1,27 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Flame, Heart, Search, Share2, ShieldCheck, Sparkles, RotateCcw, Trash2 } from 'lucide-react';
+import { Search, Link2, Check, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './style.css';
 
-const STORAGE_KEY = 'candle-wall-of-hope-demo-v2';
+const STORAGE_KEY = 'infotec-wall-of-hope-functional-v1';
 
 const starterCandles = [
-  {
-    id: 1,
-    honoured_name: 'All Warriors',
-    candle_type: 'Warrior',
-    message: 'For every brave soul still fighting. You are stronger than you know.',
-    from_name: 'Cancervive Family',
-    colour: 'gold',
-    created_at: 'Today'
-  },
-  {
-    id: 2,
-    honoured_name: 'Every Survivor',
-    candle_type: 'Survivor',
-    message: 'Your courage lights the way for others.',
-    from_name: 'We Can Together',
-    colour: 'purple',
-    created_at: 'Today'
-  },
-  {
-    id: 3,
-    honoured_name: 'Mom',
-    candle_type: 'In memory',
-    message: 'Forever loved, forever missed, forever carried in our hearts.',
-    from_name: 'Family',
-    colour: 'pink',
-    created_at: 'Today'
-  },
-  {
-    id: 4,
-    honoured_name: 'The Supporters',
-    candle_type: 'Supporter',
-    message: 'For the hands that hold, the hearts that stay, and the love that keeps showing up.',
-    from_name: 'Hope Team',
-    colour: 'blue',
-    created_at: 'Today'
-  },
-  {
-    id: 5,
-    honoured_name: 'Those We Remember',
-    candle_type: 'In memory',
-    message: 'May their light never fade.',
-    from_name: '',
-    colour: 'white',
-    created_at: 'Today'
-  }
+  { id: 1, honoured_name: 'Dad', candle_type: 'In Memory', message: 'Your strength, calm and wisdom still illuminate our lives', from_name: 'Son', colour: 'blue' },
+  { id: 2, honoured_name: 'Mom', candle_type: 'In Memory', message: '♥', from_name: '', colour: 'pink' },
+  { id: 3, honoured_name: 'Daniel Muller', candle_type: 'In Memory', message: "TFG just isn't the same without you. We miss the laughs, the chaos, our friend and your stupid face. Always remembered. Always missed. Always loved.", from_name: 'From the dark side', colour: 'purple' },
+  { id: 4, honoured_name: 'Kayleigh', candle_type: 'In Memory', message: 'The hope and joy that shone through you.', from_name: 'Your milkshake friend', colour: 'purple' },
+  { id: 5, honoured_name: 'Those we carry in our hearts', candle_type: 'In Memory', message: 'Gone from our sight, never from our hearts.', from_name: 'We Can Together', colour: 'pink' },
+  { id: 6, honoured_name: 'Every Hand That Held Someone Up', candle_type: 'Supporter', message: 'For every person who stood beside a fighter — your love, strength and support mattered more than you know.', from_name: 'With gratitude', colour: 'blue' },
+  { id: 7, honoured_name: 'All Survivors', candle_type: 'Survivor', message: 'Your strength lights the way for others', from_name: 'Cancervive Family', colour: 'blue' },
+  { id: 8, honoured_name: 'All Warriors', candle_type: 'Warrior', message: 'For every prayer, every smile, and every moment of hope you shared.', from_name: 'With love', colour: 'pink' }
 ];
-
-const colourClass = {
-  gold: 'flame-gold',
-  pink: 'flame-pink',
-  purple: 'flame-purple',
-  blue: 'flame-blue',
-  white: 'flame-white'
-};
 
 function App() {
   const [candles, setCandles] = useState([]);
-  const [submitted, setSubmitted] = useState(false);
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState('All');
+  const [copied, setCopied] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({
     honoured_name: '',
     candle_type: 'Warrior',
@@ -90,24 +45,31 @@ function App() {
     }
   }, [candles]);
 
+  const filteredCandles = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    if (!term) return candles;
+    return candles.filter((c) => {
+      const text = `${c.honoured_name} ${c.candle_type} ${c.message} ${c.from_name}`.toLowerCase();
+      return text.includes(term);
+    });
+  }, [candles, query]);
+
   function addCandle(e) {
     e.preventDefault();
     setSubmitted(false);
 
-    const clean = {
+    const newCandle = {
       id: Date.now(),
       honoured_name: form.honoured_name.trim(),
       candle_type: form.candle_type,
       message: form.message.trim(),
       from_name: form.from_name.trim(),
-      colour: form.colour,
-      created_at: 'Just now'
+      colour: form.colour
     };
 
-    if (!clean.honoured_name || !clean.message) return;
+    if (!newCandle.honoured_name || !newCandle.message) return;
 
-    setCandles([clean, ...candles]);
-
+    setCandles([newCandle, ...candles]);
     setForm({
       honoured_name: '',
       candle_type: 'Warrior',
@@ -115,7 +77,6 @@ function App() {
       from_name: '',
       colour: 'gold'
     });
-
     setSubmitted(true);
   }
 
@@ -123,274 +84,193 @@ function App() {
     setCandles(candles.filter((c) => c.id !== id));
   }
 
-  function resetDemo() {
-    localStorage.removeItem(STORAGE_KEY);
-    setCandles(starterCandles);
-    setQuery('');
-    setFilter('All');
-    setSubmitted(false);
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setCopied(false);
+    }
   }
 
-  const filteredCandles = useMemo(() => {
-    return candles.filter((c) => {
-      const haystack = `${c.honoured_name} ${c.message} ${c.from_name}`.toLowerCase();
-      const matchesSearch = haystack.includes(query.toLowerCase());
-      const matchesType = filter === 'All' || c.candle_type === filter;
-      return matchesSearch && matchesType;
-    });
-  }, [candles, query, filter]);
-
-  const shareText = encodeURIComponent(
-    'I visited the Candle Wall of Hope. Light a candle for someone you love.'
-  );
-
-  const counts = useMemo(() => {
-    return {
-      Warrior: candles.filter((c) => c.candle_type === 'Warrior').length,
-      Survivor: candles.filter((c) => c.candle_type === 'Survivor').length,
-      'In memory': candles.filter((c) => c.candle_type === 'In memory').length,
-      Supporter: candles.filter((c) => c.candle_type === 'Supporter').length
-    };
-  }, [candles]);
-
   return (
-    <main className="page">
-      <div className="background-glow one" />
-      <div className="background-glow two" />
-
-      <section className="hero">
-        <div className="hero-copy">
-          <motion.div
-            className="pill"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Heart size={16} /> We Can Together
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            Candle Wall of Hope
-          </motion.h1>
-
-          <motion.p
-            className="hero-text"
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.18 }}
-          >
-            Light a candle to honour cancer survivors, warriors, supporters, and the beautiful lives we carry in our hearts.
-          </motion.p>
-
-          <div className="stats">
-            <span>{candles.length} candles lit</span>
-            <span>Demo mode — no database</span>
-            <span>Saved only on this browser</span>
-          </div>
+    <main className="page-shell">
+      <section className="hero-panel">
+        <div className="brand-mark">
+          <span className="brand-c">C</span><span>ancervive</span>
         </div>
 
-        <motion.div
-          className="hero-card"
-          animate={{ y: [0, -8, 0] }}
-          transition={{ duration: 4, repeat: Infinity }}
-        >
-          <div className="big-candle">
-            <motion.div
-              className="big-flame"
-              animate={{ scale: [1, 1.08, 0.96, 1], rotate: [-2, 2, -1, 1] }}
-              transition={{ duration: 1.7, repeat: Infinity }}
+        <div className="hero-hashtag">#WeCanTogetherInfotec</div>
+
+        <div className="hero-grid">
+          <div>
+            <h1>Infotec Wall of Hope</h1>
+            <p>
+              A virtual space created as part of #WeCanTogetherInfotec, where we can light a candle
+              to honour cancer survivors, warriors, loved ones remembered, and everyone touched by cancer.
+            </p>
+
+            <div className="hero-badges">
+              <span>{candles.length} candles lit</span>
+              <span>Private, gentle and respectful</span>
+              <span>Shareable with your community</span>
+            </div>
+          </div>
+
+          <div className="hero-flame-wrap">
+            <AnimatedFlame size="large" colour="pink" />
+            <h2>One candle.<br />One name.<br />One moment of love.</h2>
+          </div>
+        </div>
+      </section>
+
+      <section className="app-grid">
+        <aside className="form-panel">
+          <h2>Light a candle</h2>
+          <p className="subtext">Keep the message short, kind and respectful.</p>
+
+          <form onSubmit={addCandle}>
+            <label>Name being honoured</label>
+            <input
+              value={form.honoured_name}
+              onChange={(e) => setForm({ ...form, honoured_name: e.target.value })}
+              placeholder="Example: Mom, Johan, All survivors..."
             />
-            <div className="big-wax">
-              <div className="big-wick" />
+
+            <label>Candle type</label>
+            <select
+              value={form.candle_type}
+              onChange={(e) => setForm({ ...form, candle_type: e.target.value })}
+            >
+              <option>Warrior</option>
+              <option>Survivor</option>
+              <option>In Memory</option>
+              <option>Supporter</option>
+            </select>
+
+            <label>Message</label>
+            <textarea
+              rows="5"
+              maxLength="180"
+              value={form.message}
+              onChange={(e) => setForm({ ...form, message: e.target.value })}
+              placeholder="Write a short message..."
+            />
+            <div className="char-count">{form.message.length}/180</div>
+
+            <label>From / signed by</label>
+            <input
+              value={form.from_name}
+              onChange={(e) => setForm({ ...form, from_name: e.target.value })}
+              placeholder="Optional"
+            />
+
+            <label>Candle colour</label>
+            <div className="colour-options">
+              {['pink', 'purple', 'blue', 'gold', 'white'].map((colour) => (
+                <button
+                  type="button"
+                  key={colour}
+                  className={form.colour === colour ? 'selected' : ''}
+                  onClick={() => setForm({ ...form, colour })}
+                >
+                  {colour}
+                </button>
+              ))}
             </div>
-          </div>
 
-          <h2>One candle. One name. One moment of love.</h2>
-          <p>A quiet online space for remembrance, encouragement and hope.</p>
-        </motion.div>
-      </section>
+            <button className="primary-button" type="submit">Light this candle</button>
 
-      <section className="mini-stats">
-        {Object.entries(counts).map(([type, count]) => (
-          <button
-            key={type}
-            className={filter === type ? 'mini-stat active' : 'mini-stat'}
-            onClick={() => setFilter(type)}
-            type="button"
-          >
-            <strong>{count}</strong>
-            <span>{type}</span>
-          </button>
-        ))}
-      </section>
+            {submitted && <div className="success">Candle added 💗</div>}
+          </form>
 
-      <section className="content-grid">
-        <form onSubmit={addCandle} className="form-card">
-          <div className="section-heading">
-            <Sparkles size={20} />
-            <div>
-              <h2>Light a candle</h2>
-              <p>Demo mode: no database, no approvals, no stress.</p>
-            </div>
-          </div>
+          <p className="form-note">
+            Every candle shared here represents love, remembrance, support and hope.
+          </p>
+        </aside>
 
-          <label>Name being honoured *</label>
-          <input
-            value={form.honoured_name}
-            onChange={(e) => setForm({ ...form, honoured_name: e.target.value })}
-            placeholder="Example: Mom, Johan, All survivors"
-          />
-
-          <label>Candle type</label>
-          <select
-            value={form.candle_type}
-            onChange={(e) => setForm({ ...form, candle_type: e.target.value })}
-          >
-            <option>Warrior</option>
-            <option>Survivor</option>
-            <option>In memory</option>
-            <option>Supporter</option>
-          </select>
-
-          <label>Message *</label>
-          <textarea
-            rows="4"
-            maxLength="180"
-            value={form.message}
-            onChange={(e) => setForm({ ...form, message: e.target.value })}
-            placeholder="Write a short message..."
-          />
-
-          <small>{form.message.length}/180</small>
-
-          <label>From / signed by</label>
-          <input
-            value={form.from_name}
-            onChange={(e) => setForm({ ...form, from_name: e.target.value })}
-            placeholder="Optional"
-          />
-
-          <label>Candle colour</label>
-          <div className="colour-buttons">
-            {['gold', 'pink', 'purple', 'blue', 'white'].map((colour) => (
-              <button
-                key={colour}
-                type="button"
-                className={form.colour === colour ? 'active' : ''}
-                onClick={() => setForm({ ...form, colour })}
-              >
-                {colour}
-              </button>
-            ))}
-          </div>
-
-          <button className="submit-button" type="submit">
-            <Flame size={18} /> Light this candle
-          </button>
-
-          {submitted && (
-            <div className="success">
-              Thank you 💛 Your candle has been added to this demo.
-            </div>
-          )}
-
-          <div className="note">
-            <ShieldCheck size={18} /> Demo candles are stored only in this browser using localStorage.
-          </div>
-
-          <button className="reset-button" type="button" onClick={resetDemo}>
-            <RotateCcw size={16} /> Reset demo candles
-          </button>
-        </form>
-
-        <section className="wall-section">
-          <div className="toolbar">
-            <div className="search-box">
-              <Search size={18} />
+        <section className="wall-area">
+          <div className="topbar">
+            <div className="search">
+              <Search size={15} />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search candles..."
               />
             </div>
-
-            <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-              <option>All</option>
-              <option>Warrior</option>
-              <option>Survivor</option>
-              <option>In memory</option>
-              <option>Supporter</option>
-            </select>
-
-            <a className="share" href={`https://wa.me/?text=${shareText}`} target="_blank" rel="noreferrer">
-              <Share2 size={17} /> Share
-            </a>
+            <button className="copy-button" onClick={copyLink} type="button">
+              {copied ? <Check size={15} /> : <Link2 size={15} />}
+              {copied ? 'Copied' : 'Copy Link'}
+            </button>
           </div>
 
           <AnimatePresence mode="popLayout">
-            {filteredCandles.length ? (
-              <motion.div className="candle-grid" layout>
-                {filteredCandles.map((c) => (
-                  <Candle key={c.id} candle={c} onDelete={deleteCandle} />
-                ))}
-              </motion.div>
-            ) : (
-              <motion.div
-                className="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                No candles found. Try another search or filter.
-              </motion.div>
-            )}
+            <motion.div className="candle-wall" layout>
+              {filteredCandles.map((candle) => (
+                <CandleCard key={candle.id} candle={candle} onDelete={deleteCandle} />
+              ))}
+            </motion.div>
           </AnimatePresence>
+
+          {!filteredCandles.length && (
+            <div className="empty-state">No candles found. Try another search.</div>
+          )}
         </section>
       </section>
+
+      <footer className="footer-panel">
+        <div className="footer-hashtag">#WECANTOGETHERINFOTEC</div>
+        <h2>No one fights cancer alone.</h2>
+        <p>
+          Thank you for lighting a candle, sharing a memory, supporting a warrior,
+          or simply standing with those affected by cancer.
+        </p>
+
+        <div className="footer-buttons">
+          <span>Hope</span>
+          <span>Support</span>
+          <span>Remembrance</span>
+          <span>Together</span>
+        </div>
+      </footer>
     </main>
   );
 }
 
-function Candle({ candle, onDelete }) {
+function CandleCard({ candle, onDelete }) {
   return (
     <motion.article
       layout
-      initial={{ opacity: 0, y: 15, scale: 0.98 }}
+      className="candle-card"
+      initial={{ opacity: 0, y: 18, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -10, scale: 0.96 }}
-      transition={{ duration: 0.25 }}
-      className="candle-card"
+      transition={{ duration: 0.22 }}
     >
-      <button
-        type="button"
-        className="delete-candle"
-        title="Delete demo candle"
-        onClick={() => onDelete(candle.id)}
-      >
-        <Trash2 size={15} />
+      <button className="delete-button" onClick={() => onDelete(candle.id)} type="button" title="Delete candle">
+        <Trash2 size={13} />
       </button>
 
-      <div className="candle">
-        <motion.div
-          className={`flame ${colourClass[candle.colour] || 'flame-gold'}`}
-          animate={{ scale: [1, 1.08, 0.96, 1], rotate: [-2, 2, -1, 1] }}
-          transition={{ duration: 1.8, repeat: Infinity }}
-        />
-        <div className="wax">
-          <div className="wick" />
-        </div>
-      </div>
-
-      <p className="type">{candle.candle_type}</p>
+      <AnimatedFlame colour={candle.colour} />
+      <div className="card-type">{candle.candle_type.toUpperCase()}</div>
       <h3>{candle.honoured_name}</h3>
-      <p className="message">“{candle.message}”</p>
-
-      {candle.from_name && <p className="from">— {candle.from_name}</p>}
-      <p className="date">{candle.created_at}</p>
+      <p className="card-message">“{candle.message}”</p>
+      {candle.from_name && <p className="signed">{candle.from_name.toUpperCase()}</p>}
     </motion.article>
+  );
+}
+
+function AnimatedFlame({ colour = 'pink', size = 'small' }) {
+  return (
+    <motion.div
+      className={`flame-icon ${colour} ${size}`}
+      animate={{ scale: [1, 1.08, 0.96, 1], rotate: [-2, 2, -1, 1] }}
+      transition={{ duration: 1.6, repeat: Infinity }}
+    >
+      <span />
+    </motion.div>
   );
 }
 
