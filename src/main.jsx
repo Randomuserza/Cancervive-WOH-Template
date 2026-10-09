@@ -1,277 +1,100 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { createRoot } from 'react-dom/client';
-import { Search, Link2, Check, Trash2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, {useState,useEffect,useMemo} from 'react';
+import {createRoot} from 'react-dom/client';
+import {Flame,Heart,Search,ArrowLeft,Link2,Check,Share2,ShieldCheck,Menu,X,Filter,Send,Info,Flag,LogOut,Download,RefreshCw} from 'lucide-react';
 import './style.css';
 
-const STORAGE_KEY = 'infotec-wall-of-hope-functional-v1';
-
-const starterCandles = [
-  { id: 1, honoured_name: 'Dad', candle_type: 'In Memory', message: 'Your strength, calm and wisdom still illuminate our lives', from_name: 'Son', colour: 'blue' },
-  { id: 2, honoured_name: 'Mom', candle_type: 'In Memory', message: '♥', from_name: '', colour: 'pink' },
-  { id: 3, honoured_name: 'Daniel Muller', candle_type: 'In Memory', message: "TFG just isn't the same without you. We miss the laughs, the chaos, our friend and your stupid face. Always remembered. Always missed. Always loved.", from_name: 'From the dark side', colour: 'purple' },
-  { id: 4, honoured_name: 'Kayleigh', candle_type: 'In Memory', message: 'The hope and joy that shone through you.', from_name: 'Your milkshake friend', colour: 'purple' },
-  { id: 5, honoured_name: 'Those we carry in our hearts', candle_type: 'In Memory', message: 'Gone from our sight, never from our hearts.', from_name: 'We Can Together', colour: 'pink' },
-  { id: 6, honoured_name: 'Every Hand That Held Someone Up', candle_type: 'Supporter', message: 'For every person who stood beside a fighter — your love, strength and support mattered more than you know.', from_name: 'With gratitude', colour: 'blue' },
-  { id: 7, honoured_name: 'All Survivors', candle_type: 'Survivor', message: 'Your strength lights the way for others', from_name: 'Cancervive Family', colour: 'blue' },
-  { id: 8, honoured_name: 'All Warriors', candle_type: 'Warrior', message: 'For every prayer, every smile, and every moment of hope you shared.', from_name: 'With love', colour: 'pink' }
+const API=(import.meta.env.VITE_SUPABASE_URL||'').replace(/\/$/,'');
+const KEY=import.meta.env.VITE_SUPABASE_ANON_KEY||'';
+const ONLINE=Boolean(API&&KEY);
+const TYPES=['All','Warrior','Survivor','In memory','Supporter'];
+const COLORS=['gold','pink','purple','blue','white'];
+const STARTERS=[
+ {public_id:'sample-warriors',name:'All Warriors',candle_type:'Warrior',message:'For every person facing cancer, and every moment of courage along the way.',from_name:'Cancervive',colour:'pink',demo:true},
+ {public_id:'sample-survivors',name:'All Survivors',candle_type:'Survivor',message:'Your strength and hope light the way for others.',from_name:'Cancervive',colour:'blue',demo:true},
+ {public_id:'sample-memory',name:'Those we carry in our hearts',candle_type:'In memory',message:'Always remembered, always part of our journey.',from_name:'Cancervive',colour:'purple',demo:true}
 ];
-
-function App() {
-  const [candles, setCandles] = useState([]);
-  const [query, setQuery] = useState('');
-  const [copied, setCopied] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState({
-    honoured_name: '',
-    candle_type: 'Warrior',
-    message: '',
-    from_name: '',
-    colour: 'gold'
-  });
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      setCandles(saved ? JSON.parse(saved) : starterCandles);
-    } catch {
-      setCandles(starterCandles);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (candles.length) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(candles));
-    }
-  }, [candles]);
-
-  const filteredCandles = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    if (!term) return candles;
-    return candles.filter((c) => {
-      const text = `${c.honoured_name} ${c.candle_type} ${c.message} ${c.from_name}`.toLowerCase();
-      return text.includes(term);
-    });
-  }, [candles, query]);
-
-  function addCandle(e) {
-    e.preventDefault();
-    setSubmitted(false);
-
-    const newCandle = {
-      id: Date.now(),
-      honoured_name: form.honoured_name.trim(),
-      candle_type: form.candle_type,
-      message: form.message.trim(),
-      from_name: form.from_name.trim(),
-      colour: form.colour
-    };
-
-    if (!newCandle.honoured_name || !newCandle.message) return;
-
-    setCandles([newCandle, ...candles]);
-    setForm({
-      honoured_name: '',
-      candle_type: 'Warrior',
-      message: '',
-      from_name: '',
-      colour: 'gold'
-    });
-    setSubmitted(true);
-  }
-
-  function deleteCandle(id) {
-    setCandles(candles.filter((c) => c.id !== id));
-  }
-
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    } catch {
-      setCopied(false);
-    }
-  }
-
-  return (
-    <main className="page-shell">
-      <section className="hero-panel">
-        <div className="brand-mark">
-          <span className="brand-c">C</span><span>ancervive</span>
-        </div>
-
-        <div className="hero-hashtag">#WeCanTogetherInfotec</div>
-
-        <div className="hero-grid">
-          <div>
-            <h1>Infotec Wall of Hope</h1>
-            <p>
-              A virtual space created as part of #WeCanTogetherInfotec, where we can light a candle
-              to honour cancer survivors, warriors, loved ones remembered, and everyone touched by cancer.
-            </p>
-
-            <div className="hero-badges">
-              <span>{candles.length} candles lit</span>
-              <span>Private, gentle and respectful</span>
-              <span>Shareable with your community</span>
-            </div>
-          </div>
-
-          <div className="hero-flame-wrap">
-            <AnimatedFlame size="large" colour="pink" />
-            <h2>One candle.<br />One name.<br />One moment of love.</h2>
-          </div>
-        </div>
-      </section>
-
-      <section className="app-grid">
-        <aside className="form-panel">
-          <h2>Light a candle</h2>
-          <p className="subtext">Keep the message short, kind and respectful.</p>
-
-          <form onSubmit={addCandle}>
-            <label>Name being honoured</label>
-            <input
-              value={form.honoured_name}
-              onChange={(e) => setForm({ ...form, honoured_name: e.target.value })}
-              placeholder="Example: Mom, Johan, All survivors..."
-            />
-
-            <label>Candle type</label>
-            <select
-              value={form.candle_type}
-              onChange={(e) => setForm({ ...form, candle_type: e.target.value })}
-            >
-              <option>Warrior</option>
-              <option>Survivor</option>
-              <option>In Memory</option>
-              <option>Supporter</option>
-            </select>
-
-            <label>Message</label>
-            <textarea
-              rows="5"
-              maxLength="180"
-              value={form.message}
-              onChange={(e) => setForm({ ...form, message: e.target.value })}
-              placeholder="Write a short message..."
-            />
-            <div className="char-count">{form.message.length}/180</div>
-
-            <label>From / signed by</label>
-            <input
-              value={form.from_name}
-              onChange={(e) => setForm({ ...form, from_name: e.target.value })}
-              placeholder="Optional"
-            />
-
-            <label>Candle colour</label>
-            <div className="colour-options">
-              {['pink', 'purple', 'blue', 'gold', 'white'].map((colour) => (
-                <button
-                  type="button"
-                  key={colour}
-                  className={form.colour === colour ? 'selected' : ''}
-                  onClick={() => setForm({ ...form, colour })}
-                >
-                  {colour}
-                </button>
-              ))}
-            </div>
-
-            <button className="primary-button" type="submit">Light this candle</button>
-
-            {submitted && <div className="success">Candle added 💗</div>}
-          </form>
-
-          <p className="form-note">
-            Every candle shared here represents love, remembrance, support and hope.
-          </p>
-        </aside>
-
-        <section className="wall-area">
-          <div className="topbar">
-            <div className="search">
-              <Search size={15} />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search candles..."
-              />
-            </div>
-            <button className="copy-button" onClick={copyLink} type="button">
-              {copied ? <Check size={15} /> : <Link2 size={15} />}
-              {copied ? 'Copied' : 'Copy Link'}
-            </button>
-          </div>
-
-          <AnimatePresence mode="popLayout">
-            <motion.div className="candle-wall" layout>
-              {filteredCandles.map((candle) => (
-                <CandleCard key={candle.id} candle={candle} onDelete={deleteCandle} />
-              ))}
-            </motion.div>
-          </AnimatePresence>
-
-          {!filteredCandles.length && (
-            <div className="empty-state">No candles found. Try another search.</div>
-          )}
-        </section>
-      </section>
-
-      <footer className="footer-panel">
-        <div className="footer-hashtag">#WECANTOGETHERINFOTEC</div>
-        <h2>No one fights cancer alone.</h2>
-        <p>
-          Thank you for lighting a candle, sharing a memory, supporting a warrior,
-          or simply standing with those affected by cancer.
-        </p>
-
-        <div className="footer-buttons">
-          <span>Hope</span>
-          <span>Support</span>
-          <span>Remembrance</span>
-          <span>Together</span>
-        </div>
-      </footer>
-    </main>
-  );
+function path(){return decodeURI(window.location.pathname)}
+function navigate(p){history.pushState({},'',p);window.dispatchEvent(new PopStateEvent('popstate'));window.scrollTo({top:0,behavior:'instant'})}
+async function request(endpoint, opts={}){
+ if(!ONLINE)throw Error('The separate test database has not been connected yet.');
+ const token=opts.token||KEY;
+ const response=await fetch(API+'/rest/v1/'+endpoint,{method:opts.method||'GET',headers:{apikey:KEY,Authorization:'Bearer '+token,'Content-Type':'application/json',Prefer:'return=representation',...(opts.headers||{})},body:opts.body===undefined?undefined:JSON.stringify(opts.body)});
+ if(!response.ok){let e;try{e=await response.json()}catch{}throw Error(e?.message||e?.error_description||'Request failed ('+response.status+')')}
+ const data=await response.json().catch(()=>null);return data;
 }
-
-function CandleCard({ candle, onDelete }) {
-  return (
-    <motion.article
-      layout
-      className="candle-card"
-      initial={{ opacity: 0, y: 18, scale: 0.97 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -10, scale: 0.96 }}
-      transition={{ duration: 0.22 }}
-    >
-      <button className="delete-button" onClick={() => onDelete(candle.id)} type="button" title="Delete candle">
-        <Trash2 size={13} />
-      </button>
-
-      <AnimatedFlame colour={candle.colour} />
-      <div className="card-type">{candle.candle_type.toUpperCase()}</div>
-      <h3>{candle.honoured_name}</h3>
-      <p className="card-message">“{candle.message}”</p>
-      {candle.from_name && <p className="signed">{candle.from_name.toUpperCase()}</p>}
-    </motion.article>
-  );
+const clean=(s,n)=>String(s||'').trim().slice(0,n);
+function Candle({colour='gold',small=false}){return <span className={'candle candle-'+(COLORS.includes(colour)?colour:'gold')+(small?' small':'')} aria-hidden="true"><span className="glow"/><span className="flame"/><span className="wick"/><span className="wax"/><span className="base"/></span>}
+function copyLink(url){return navigator.clipboard?.writeText(url).catch(()=>{window.prompt('Copy link',url)}) || Promise.resolve(window.prompt('Copy link',url))}
+function share(pathSuffix){const url=location.origin+pathSuffix;return navigator.share?navigator.share({title:'Cancervive Wall of Hope',text:'A light of hope, from Cancervive.',url}).catch(()=>copyLink(url)):copyLink(url)}
+function Chip({children,active,onClick}){return <button className={'chip '+(active?'active':'')} onClick={onClick}>{children}</button>}
+function Card({d,onOpen}){return <article className="candle-card"><Candle colour={d.colour}/><div className="card-body"><div className="eyebrow">{d.candle_type}{d.riding_for?' · Riding for':''}</div><h3>{d.name}</h3><p className="excerpt">{d.message}</p>{d.from_name&&<p className="signature">From {d.from_name}</p>}<button className="text-link" onClick={onOpen}>{d.demo?'View sample':'View dedication'} →</button></div></article>}
+const DEFAULT={name:'',candle_type:'Supporter',message:'',from_name:'',colour:'gold',riding_for:false,rider_name:'',town:'',province:'',consent:false};
+const PROVINCES=['Prefer not to say','Eastern Cape','Free State','Gauteng','KwaZulu-Natal','Limpopo','Mpumalanga','North West','Northern Cape','Western Cape','Outside South Africa'];
+function Form({riding=false,stop=null,onComplete}) {
+ const [form,setForm]=useState({...DEFAULT,riding_for:riding});const [error,setError]=useState('');const [busy,setBusy]=useState(false);
+ const set=(k,v)=>setForm(f=>({...f,[k]:v}));const id=useMemo(()=>crypto.randomUUID?.()||String(Date.now())+Math.random(),[]);
+ async function submit(e){e.preventDefault();setError('');if(!form.consent)return setError('Please confirm public display consent before submitting.');
+ if(!clean(form.name,80)||!clean(form.message,180))return setError('Please enter a name and a short message.');
+ if(form.riding_for&&!clean(form.rider_name,60))return setError('Please enter the rider name.');
+ if(!ONLINE)return setError('Submissions are not open yet: the isolated test database is being connected.');
+ setBusy(true);
+ try {const result=await request('rpc/submit_dedication_v2',{method:'POST',body:{p_payload:{...form,name:clean(form.name,80),message:clean(form.message,180),from_name:clean(form.from_name,60),rider_name:clean(form.rider_name,60),town:clean(form.town,80),stop_code:stop||null,idempotency_key:id}}});
+ const receipt=Array.isArray(result)?result[0]:result;
+ if(!receipt?.receipt_id||!receipt?.receipt_token)throw Error('Submission returned an incomplete receipt.');
+ sessionStorage.setItem('cancervive-receipt-'+receipt.receipt_id,receipt.receipt_token);
+ onComplete(receipt.receipt_id);
+ }catch(ex){setError(ex.message)}finally{setBusy(false)}}
+ return <section className="form-wrap"><button className="back" onClick={()=>navigate('/')}>← Back to wall</button><div className="form-panel"><div className="eyebrow">Make a dedication</div><h1>{form.riding_for?"Who I'm riding for":"Light a candle"}</h1><p className="muted">Carry their name with us. A first name or nickname is fine. Share only what you're comfortable making public.</p>
+ {stop&&<div className="notice">You arrived through a Cancervive stop link: <strong>{stop}</strong></div>}
+ <form onSubmit={submit}>
+ <label>Who is this candle for? <span aria-hidden="true">*</span><input maxLength={80} required value={form.name} onChange={e=>set('name',e.target.value)} placeholder="First name or nickname"/></label>
+ <fieldset><legend>Dedication type</legend><div className="choice-row">{TYPES.slice(1).map(t=><button type="button" key={t} className={'choice '+(form.candle_type===t?'selected':'')} onClick={()=>set('candle_type',t)} aria-pressed={form.candle_type===t}>{t}</button>)}</div></fieldset>
+ <label>Your message <span aria-hidden="true">*</span><textarea maxLength={180} required rows={4} value={form.message} onChange={e=>set('message',e.target.value)} placeholder="A few words from your heart…"/></label><div className="counter">{Array.from(form.message).length} / 180 characters</div>
+ <label>From / signed <span className="optional">(optional, shown publicly)</span><input maxLength={60} value={form.from_name} onChange={e=>set('from_name',e.target.value)} placeholder="Your name or nickname"/></label>
+ <fieldset><legend>Candle colour</legend><div className="swatches">{COLORS.map(c=><button type="button" key={c} className={'swatch '+c+(form.colour===c?' selected':'')} onClick={()=>set('colour',c)} aria-label={c+' candle'} aria-pressed={form.colour===c}><span>{form.colour===c?'✓':''}</span><small>{c}</small></button>)}</div></fieldset>
+ <label className="checkline"><input type="checkbox" checked={form.riding_for} onChange={e=>set('riding_for',e.target.checked)}/><span>I'm riding for someone</span></label>
+ {form.riding_for&&<label>Rider's display name <span aria-hidden="true">*</span><input maxLength={60} required value={form.rider_name} onChange={e=>set('rider_name',e.target.value)} placeholder="Name of rider"/></label>}
+ <details><summary>Optional location</summary><label>Town <input maxLength={80} value={form.town} onChange={e=>set('town',e.target.value)} placeholder="Town, if you'd like"/></label><label>Province <select value={form.province} onChange={e=>set('province',e.target.value)}><option value="">Not specified</option>{PROVINCES.map(p=><option key={p}>{p}</option>)}</select></label></details>
+ <label className="checkline consent"><input type="checkbox" required checked={form.consent} onChange={e=>set('consent',e.target.checked)}/><span>I agree to this dedication being displayed publicly and confirm I have permission to share these names and details.</span></label>
+ {error&&<div role="alert" className="error">{error}</div>}
+ <button type="submit" className="button primary wide" disabled={busy||!ONLINE}>{busy?'Submitting…':'Submit dedication'}</button>
+ {!ONLINE&&<p className="setup-warning" role="status">TEST BUILD — submissions are temporarily disabled until the separate V2 database is ready.</p>}
+ <p className="fineprint">Dedications are reviewed before appearing on the wall. Please don't include contact details or sensitive medical information.</p></form></div></section>
 }
-
-function AnimatedFlame({ colour = 'pink', size = 'small' }) {
-  return (
-    <motion.div
-      className={`flame-icon ${colour} ${size}`}
-      animate={{ scale: [1, 1.08, 0.96, 1], rotate: [-2, 2, -1, 1] }}
-      transition={{ duration: 1.6, repeat: Infinity }}
-    >
-      <span />
-    </motion.div>
-  );
+function Receipt({id}){const [result,setResult]=useState(null),[err,setErr]=useState(''),[busy,setBusy]=useState(false);
+ async function check(){const token=sessionStorage.getItem('cancervive-receipt-'+id);if(!token){setErr('This receipt is private to the browser where it was submitted.');return}setBusy(true);try{setResult(await request('rpc/check_receipt_v2',{method:'POST',body:{p_id:id,p_token:token}}));setErr('')}catch(e){setErr(e.message)}finally{setBusy(false)}}
+ useEffect(()=>{check()},[id]);
+ return <div className="simple-page"><div className="panel centered"><div className="circle-icon"><Check/></div><div className="eyebrow">Private submission receipt</div><h1>Thank you for carrying their name.</h1><p>Your dedication has been received and will appear on the wall once approved.</p><p className="fineprint">Keep this page in the same browser if you'd like to check approval. Your dedication is not public while pending.</p>{result&&<div className="notice">Status: <strong>{result.status}</strong></div>}{result?.status==='approved'&&result.public_id&&<button className="button primary" onClick={()=>navigate('/d/'+result.public_id)}>View approved dedication</button>}{err&&<p role="alert" className="error">{err}</p>}<div className="action-row"><button className="button soft" onClick={check} disabled={busy}><RefreshCw size={17}/> {busy?'Checking…':'Check status'}</button><button className="button soft" onClick={()=>share('/')}>Share the wall</button></div><button className="text-link" onClick={()=>navigate('/')}>Return to the wall →</button></div></div>
 }
-
-createRoot(document.getElementById('root')).render(<App />);
+function Detail({id}){const sample=STARTERS.find(s=>s.public_id===id);const [data,setData]=useState(sample||null),[loading,setLoading]=useState(!sample),[reporting,setReporting]=useState(false),[reason,setReason]=useState(''),[feedback,setFeedback]=useState('');
+ useEffect(()=>{if(sample)return;if(!ONLINE){setLoading(false);return}request('dedications?select=public_id,name,candle_type,message,from_name,colour,riding_for,rider_name,town,province,created_at&public_id=eq.'+encodeURIComponent(id)+'&status=eq.approved&limit=1').then(r=>setData(r?.[0]||null)).catch(()=>{}).finally(()=>setLoading(false))},[id]);
+ async function report(e){e.preventDefault();try{await request('rpc/report_dedication_v2',{method:'POST',body:{p_public_id:id,p_reason:reason}});setFeedback('Thank you. Your report has been received.');setReporting(false)}catch(e){setFeedback(e.message)}}
+ return <div className="simple-page"><button className="back" onClick={()=>navigate('/')}>← Back to wall</button><div className="panel detail centered">{loading?<p>Loading dedication…</p>:data?<><Candle colour={data.colour}/><div className="eyebrow">{data.candle_type} {data.riding_for?'· Riding for':''}</div><h1>{data.name}</h1><blockquote>“{data.message}”</blockquote>{data.from_name&&<p className="signature">From {data.from_name}</p>}{data.riding_for&&data.rider_name&&<p className="muted">Riding for: {data.rider_name}</p>}{data.demo&&<p className="demo-note">Illustrative starter dedication</p>}<div className="action-row"><button className="button primary" onClick={()=>share('/d/'+id)}><Share2 size={17}/> Share dedication</button><button className="button soft" onClick={()=>navigate('/new')}>Light a candle</button></div>{!data.demo&&<><button className="text-link report-link" onClick={()=>setReporting(!reporting)}><Flag size={14}/> Report this dedication</button>{reporting&&<form onSubmit={report} className="report-form"><label>Reason for report<textarea required maxLength={500} rows={3} value={reason} onChange={e=>setReason(e.target.value)}/></label><button className="button soft" type="submit">Send report</button></form>}{feedback&&<p role="status">{feedback}</p>}</>}</>:<><h1>Dedication unavailable</h1><p>This dedication may still be under review, or the link may no longer be available.</p><button className="button primary" onClick={()=>navigate('/')}>Browse the wall</button></>}</div></div>
+}
+function Wall({stop}){const [data,setData]=useState([]),[query,setQuery]=useState(''),[type,setType]=useState('All'),[busy,setBusy]=useState(false),[error,setError]=useState(''),[filterOpen,setFilterOpen]=useState(false),[pause,setPause]=useState(false);
+ async function load(){if(!ONLINE)return;setBusy(true);try{const rows=await request('dedications?select=public_id,name,candle_type,message,from_name,colour,riding_for,rider_name&status=eq.approved&order=created_at.desc&limit=100');setData(rows||[]);setError('')}catch(e){setError('The wall could not be refreshed. Please try again.')}finally{setBusy(false)}}
+ useEffect(()=>{load()},[]);
+ const displayed=useMemo(()=>{const src=ONLINE?data:STARTERS;return src.filter(c=>(type==='All'||c.candle_type===type)&&(!query||[c.name,c.message,c.from_name].join(' ').toLocaleLowerCase().includes(query.toLocaleLowerCase())))},[data,type,query]);
+ return <><section className="hero"><div className="hero-copy"><div className="eyebrow">#WeCanTogetherInfotec</div><h1>Every light<br/><em>holds a story.</em></h1><p>Carry their name with us. Light a candle or leave a dedication as Cancervive travels across South Africa.</p><div className="action-row"><button className="button primary" onClick={()=>navigate('/new')}><Flame size={19}/> Light a candle</button><button className="button outline" onClick={()=>navigate('/riding-for')}><Heart size={19}/> I'm riding for…</button></div>{stop&&<p className="notice">You're visiting through a Cancervive stop link. Welcome — every dedication matters.</p>}</div><div className="hero-art"><div className="glow-ring"><Candle colour="pink"/><Candle colour="purple"/><Candle colour="blue"/></div><div className="hero-caption">No one fights cancer alone.</div></div></section>
+ <section className="wall-section" id="wall"><div className="section-heading"><div><div className="eyebrow">The wall of hope</div><h2>Stories that shine</h2><p className="muted">Read a dedication. Leave a message. Carry someone with you.</p></div><div className="wall-count">{ONLINE?data.length:STARTERS.length} <small>{ONLINE?'approved lights':'sample lights'}</small></div></div>
+ {!ONLINE&&<div className="notice" role="status"><Info size={18}/> <span><strong>Preview environment:</strong> the candles shown are illustrative. Live submissions will open when the isolated V2 database is connected.</span></div>}
+ <div className="tools"><label className="searchbox"><Search size={19}/><span className="sr-only">Search dedications</span><input placeholder="Search a name or message…" value={query} onChange={e=>setQuery(e.target.value)}/></label><button className="button soft filter-toggle" onClick={()=>setFilterOpen(!filterOpen)}><Filter size={18}/> Filter</button><button className="pause-link" onClick={()=>setPause(!pause)}>{pause?'Resume':'Pause'} animation</button></div>
+ <div className={'filter-row '+(filterOpen?'opened':'')}>{TYPES.map(t=><Chip key={t} active={type===t} onClick={()=>{setType(t);setFilterOpen(false)}}>{t}</Chip>)}</div>
+ {error&&<div className="error" role="alert">{error}<button className="text-link" onClick={load}>Retry</button></div>}
+ {busy&&<p role="status">Refreshing dedications…</p>}
+ <div className={'cards '+(pause?'paused':'')}>{displayed.map(c=><Card key={c.public_id} d={c} onOpen={()=>navigate('/d/'+c.public_id)}/>)}</div>
+ {!busy&&!displayed.length&&<div className="empty"><Flame size={30}/><h3>No dedications found</h3><p>Try another name or choose a different filter.</p><button className="button soft" onClick={()=>{setQuery('');setType('All')}}>Clear search</button></div>}
+ </section><section className="closing"><Heart/><h2>We can, together.</h2><p>For the warriors, the survivors, the people we remember, and everyone standing beside them.</p><button className="button primary" onClick={()=>navigate('/new')}>Leave a light of hope</button></section></>
+}
+function Admin(){const [email,setEmail]=useState(''),[password,setPassword]=useState(''),[token,setToken]=useState(sessionStorage.getItem('woh-v2-admin-token')||''),[records,setRecords]=useState([]),[selected,setSelected]=useState(null),[reason,setReason]=useState(''),[error,setError]=useState(''),[loading,setLoading]=useState(false);
+ async function login(e){e.preventDefault();setError('');try{const r=await fetch(API+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password})});const d=await r.json();if(!r.ok)throw Error(d.error_description||d.msg||'Sign-in failed');setToken(d.access_token);sessionStorage.setItem('woh-v2-admin-token',d.access_token);setPassword('')}catch(e){setError(e.message)}}
+ async function load(){setLoading(true);try{const r=await request('dedications?select=id,public_id,name,candle_type,message,from_name,colour,status,created_at,riding_for,rider_name&order=created_at.desc&limit=200',{token});setRecords(r);setError('')}catch(e){setError('Access denied or session expired. You must be an authorised Cancervive moderator. '+e.message)}finally{setLoading(false)}}
+ useEffect(()=>{if(token&&ONLINE)load()},[token]);
+ async function action(status){if(!selected)return;try{await request('rpc/moderate_dedication_v2',{method:'POST',token,body:{p_id:selected.id,p_status:status,p_reason:reason||null}});setSelected(null);setReason('');await load()}catch(e){setError(e.message)}}
+ function exportCsv(){const cols=['created_at','name','candle_type','message','from_name','status'];const val=v=>'"'+String(v||'').replace(/^[=+\-@]/,"'").replace(/"/g,'""')+'"';const body=[cols.join(','),...records.map(r=>cols.map(k=>val(r[k])).join(','))].join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([body],{type:'text/csv;charset=utf-8'}));a.download='cancervive-v2-dedications.csv';a.click();URL.revokeObjectURL(a.href)}
+ return <div className="simple-page admin"><button className="back" onClick={()=>navigate('/')}>← Back to wall</button><div className="panel"><div className="eyebrow">Restricted area</div><h1>Review dedications</h1>{!ONLINE?<p className="error">The isolated database is not connected.</p>:!token?<form onSubmit={login} className="login-form"><p>Only approved Cancervive moderators can sign in.</p><label>Email<input type="email" required value={email} onChange={e=>setEmail(e.target.value)}/></label><label>Password<input type="password" required value={password} onChange={e=>setPassword(e.target.value)}/></label><button className="button primary" type="submit">Sign in</button></form>:<><div className="action-row"><button className="button soft" onClick={load}><RefreshCw size={17}/> Refresh</button><button className="button soft" onClick={exportCsv}><Download size={17}/> Export CSV</button><button className="button soft" onClick={()=>{setToken('');sessionStorage.removeItem('woh-v2-admin-token')}}><LogOut size={17}/> Sign out</button></div>{loading&&<p>Loading…</p>}<div className="admin-grid"><div className="queue">{records.map(r=><button key={r.id} className={'queue-item '+(selected?.id===r.id?'active':'')} onClick={()=>setSelected(r)}><strong>{r.name}</strong><span>{r.candle_type} · {r.status}</span></button>)}{!records.length&&<p>No records to show.</p>}</div><div className="review">{selected?<><div className="eyebrow">{selected.status}</div><h2>{selected.name}</h2><p>{selected.message}</p><p className="muted">From {selected.from_name||'Anonymous'}</p><label>Internal reason (optional for approval)<textarea rows={3} value={reason} onChange={e=>setReason(e.target.value)}/></label><div className="action-row"><button className="button primary" onClick={()=>action('approved')}>Approve</button><button className="button soft" onClick={()=>action('rejected')}>Reject</button><button className="button soft" onClick={()=>action('hidden')}>Hide</button></div></>:<p>Select a dedication to review.</p>}</div></div></>}{error&&<div className="error" role="alert">{error}</div>}</div></div>
+}
+function App(){const [route,setRoute]=useState(path());useEffect(()=>{const fn=()=>setRoute(path());window.addEventListener('popstate',fn);return()=>window.removeEventListener('popstate',fn)},[]);const [menu,setMenu]=useState(false);
+ let page=route==='/new'?<Form key={route} onComplete={id=>navigate('/receipt/'+id)}/>:route==='/riding-for'?<Form key={route} riding onComplete={id=>navigate('/receipt/'+id)}/>:route.startsWith('/d/')?<Detail key={route} id={route.split('/')[2]}/>:route.startsWith('/receipt/')?<Receipt key={route} id={route.split('/')[2]}/>:route==='/admin'?<Admin/>:route.startsWith('/q/')?<Wall stop={route.split('/')[2]}/>:<Wall/>;
+ return <div className="app"><a href="#main" className="skip">Skip to content</a><header className="site-header"><div className="header-inner"><button className="brand" onClick={()=>navigate('/')} aria-label="Cancervive Wall of Hope home"><span className="brand-icon"><Flame size={22}/></span><span className="brand-name">CANCERVIVE <small>WALL OF HOPE</small></span></button><nav className={menu?'nav opened':'nav'} aria-label="Main navigation"><button onClick={()=>{navigate('/');setMenu(false)}}>The wall</button><button onClick={()=>{navigate('/riding-for');setMenu(false)}}>I'm riding for</button><button className="button small primary" onClick={()=>{navigate('/new');setMenu(false)}}>Light a candle</button></nav><button aria-label="Toggle menu" aria-expanded={menu} className="menu-toggle" onClick={()=>setMenu(!menu)}>{menu?<X/>:<Menu/>}</button></div></header><main id="main" className="container">{page}</main><footer className="site-footer"><div className="container footer-content"><span>© Cancervive · Wall of Hope</span><span>No one fights cancer alone.</span><button onClick={()=>navigate('/admin')}>Moderators</button></div></footer>{route==='/'&&<button className="mobile-fixed" onClick={()=>navigate('/new')}><Flame size={18}/> Light a candle</button>}</div>}
+createRoot(document.getElementById('root')).render(<App/>);
